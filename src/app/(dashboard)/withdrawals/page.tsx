@@ -1,4 +1,7 @@
-import { Card } from "@/components/ui/card"
+import { WithdrawalsView } from "@/components/withdrawals-view"
+import { withdrawals } from "@/data/withdrawals"
+
+export const dynamic = "force-static"
 
 export default function WithdrawalsPage() {
   return (
@@ -7,7 +10,7 @@ export default function WithdrawalsPage() {
         <h1 className="text-3xl font-bold">การถอนเครดิต</h1>
         <p className="text-muted-foreground">จัดการคำขอถอนเครดิตของสมาชิก</p>
       </div>
-      <Card className="p-12 text-center text-muted-foreground">หน้านี้อยู่ระหว่างการพัฒนา</Card>
+      <WithdrawalsView initialWithdrawals={withdrawals} />
     </div>
   )
 }
