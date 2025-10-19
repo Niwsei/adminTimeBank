@@ -1,21 +1,35 @@
-import { sign } from 'jsonwebtoken';
 import { NextResponse } from 'next/server';
-import { setCookie } from 'cookies-next';
-
-// In a real app, use a secret from environment variables
-const JWT_SECRET = process.env.JWT_SECRET || 'this-is-a-super-secret-key';
 
 export async function POST(request: Request) {
   const { username, password } = await request.json();
 
-  if (username === 'admin' && password === 'admin') {
-    const token = sign({ username }, JWT_SECRET, { expiresIn: '1h' });
+  try {
+    const backendResponse = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ identifier: username, password, remember: true }),
+    });
 
-    const response = NextResponse.json({ success: true });
-    setCookie('auth_token', token, { req: request as any, res: response as any, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    const data = await backendResponse.json();
+
+    if (!backendResponse.ok) {
+      return NextResponse.json(data, { status: backendResponse.status });
+    }
+
+    const response = NextResponse.json(data);
+
+    // Forward the Set-Cookie header from the backend
+    const cookie = backendResponse.headers.get('Set-Cookie');
+    if (cookie) {
+      response.headers.set('Set-Cookie', cookie);
+    }
 
     return response;
-  } else {
-    return NextResponse.json({ success: false, message: 'Invalid credentials' }, { status: 401 });
+
+  } catch (error) {
+    console.error('[LOGIN_API_ROUTE]', error);
+    return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
   }
 }
