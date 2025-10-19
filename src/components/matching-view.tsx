@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { PlusCircle } from "lucide-react"
 import { CreateMatchDialog } from "./create-match-dialog"
-import { useToast } from "@/hooks/use-toast"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "./ui/table"
 
 type Job = {
@@ -18,10 +17,23 @@ type Applicant = {
   user_id: string
   first_name: string
   last_name: string
+  job_id: string // Added to associate applicants with jobs
 }
 
+const mockJobs: Job[] = [
+  { job_id: "JOB-001", job_title: "ดูแลผู้สูงอายุ", job_description: "ช่วยดูแลผู้สูงอายุที่บ้าน" },
+  { job_id: "JOB-002", job_title: "สอนพิเศษคณิตศาสตร์", job_description: "สอนพิเศษคณิตศาสตร์ ม.ปลาย" },
+  { job_id: "JOB-003", job_title: "ทำสวน", job_description: "ช่วยดูแลสวนในบ้าน" },
+];
+
+const mockApplicants: Applicant[] = [
+  { user_id: "USR-001", first_name: "สมชาย", last_name: "ใจดี", job_id: "JOB-001" },
+  { user_id: "USR-004", first_name: "มานี", last_name: "มีนา", job_id: "JOB-001" },
+  { user_id: "USR-002", first_name: "สมหญิง", last_name: "รักไทย", job_id: "JOB-002" },
+  { user_id: "USR-005", first_name: "ปิติ", last_name: "ชูใจ", job_id: "JOB-003" },
+];
+
 export function MatchingView() {
-  const { toast } = useToast()
   const [jobs, setJobs] = useState<Job[]>([])
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
   const [applicants, setApplicants] = useState<Applicant[]>([])
@@ -30,50 +42,21 @@ export function MatchingView() {
   const [isCreateMatchDialogOpen, setIsCreateMatchDialogOpen] = useState(false)
 
   useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/api/admin/jobs-for-matching`, {
-          credentials: "include",
-        })
-        const payload = await response.json()
-        if (!response.ok || !payload.jobs) {
-          throw new Error(payload.message || "Failed to fetch jobs")
-        }
-        setJobs(payload.jobs)
-      } catch (error: any) {
-        toast({
-          title: "เกิดข้อผิดพลาด",
-          description: error.message || "ไม่สามารถดึงข้อมูลงานได้",
-          variant: "destructive",
-        })
-      } finally {
-        setIsLoadingJobs(false)
-      }
-    }
-    fetchJobs()
-  }, [toast])
+    setIsLoadingJobs(true);
+    setTimeout(() => {
+      setJobs(mockJobs);
+      setIsLoadingJobs(false);
+    }, 500);
+  }, [])
 
-  const handleSelectJob = async (job: Job) => {
+  const handleSelectJob = (job: Job) => {
     setSelectedJob(job)
     setIsLoadingApplicants(true)
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/api/admin/jobs/${job.job_id}/applicants`, {
-        credentials: "include",
-      })
-      const payload = await response.json()
-      if (!response.ok || !payload.applicants) {
-        throw new Error(payload.message || "Failed to fetch applicants")
-      }
-      setApplicants(payload.applicants)
-    } catch (error: any) {
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: error.message || "ไม่สามารถดึงข้อมูลผู้สมัครได้",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoadingApplicants(false)
-    }
+    setTimeout(() => {
+      const jobApplicants = mockApplicants.filter(app => app.job_id === job.job_id);
+      setApplicants(jobApplicants);
+      setIsLoadingApplicants(false);
+    }, 500);
   }
 
   return (
@@ -123,7 +106,7 @@ export function MatchingView() {
           <CardContent>
             {isLoadingApplicants ? (
               <p>Loading...</p>
-            ) : applicants.length > 0 ? (
+            ) : selectedJob && applicants.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>

@@ -18,6 +18,14 @@ type CreateMatchDialogProps = {
   jobId?: string
 }
 
+const mockUsers: User[] = [
+  { id: "USR-001", name: "สมชาย ใจดี" },
+  { id: "USR-002", name: "สมหญิง รักไทย" },
+  { id: "USR-003", name: "จอห์น โด" },
+  { id: "USR-004", name: "มานี มีนา" },
+  { id: "USR-005", name: "ปิติ ชูใจ" },
+];
+
 export function CreateMatchDialog({ open, onOpenChange, jobId }: CreateMatchDialogProps) {
   const { toast } = useToast()
   const [users, setUsers] = useState<User[]>([])
@@ -27,29 +35,11 @@ export function CreateMatchDialog({ open, onOpenChange, jobId }: CreateMatchDial
 
   useEffect(() => {
     if (open) {
-      const fetchUsers = async () => {
-        try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/api/admin/users-with-line-id`, {
-            credentials: "include",
-          })
-          const payload = await response.json()
-          if (!response.ok || !payload.success) {
-            throw new Error(payload.message || "Failed to fetch users")
-          }
-          setUsers(payload.users)
-        } catch (error: any) {
-          toast({
-            title: "เกิดข้อผิดพลาด",
-            description: error.message || "ไม่สามารถดึงข้อมูลผู้ใช้ได้",
-            variant: "destructive",
-          })
-        }
-      }
-      fetchUsers()
+      setUsers(mockUsers)
     }
-  }, [open, toast])
+  }, [open])
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!jobId || !selectedUserId) {
       toast({
         title: "ข้อมูลไม่ครบถ้วน",
@@ -60,36 +50,14 @@ export function CreateMatchDialog({ open, onOpenChange, jobId }: CreateMatchDial
     }
 
     setIsSubmitting(true)
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/api/admin/matches`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ job_id: jobId, user_id: selectedUserId, reason }),
-      })
-
-      const payload = await response.json()
-
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.message || "Failed to create match")
-      }
-
+    setTimeout(() => {
       toast({
         title: "สร้างการจับคู่สำเร็จ",
-        description: `จับคู่งานกับผู้ใช้เรียบร้อยแล้ว`,
+        description: `จับคู่งาน ${jobId} กับผู้ใช้ ${selectedUserId} เรียบร้อยแล้ว`,
       })
-      onOpenChange(false)
-    } catch (error: any) {
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: error.message || "ไม่สามารถสร้างการจับคู่ได้",
-        variant: "destructive",
-      })
-    } finally {
       setIsSubmitting(false)
-    }
+      onOpenChange(false)
+    }, 1000)
   }
 
   return (

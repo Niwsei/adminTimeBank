@@ -4,36 +4,38 @@ import { Users, CreditCard, CheckCircle2, Clock, TrendingUp } from "lucide-react
 
 import { StatisticsChart } from "@/components/statistics-chart"
 
-async function getHelpRequests() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/help-requests`, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch help requests');
-  return res.json();
-}
+// Define types for our data
+type HelpRequest = {
+  status: string;
+  date: string;
+};
 
-async function getMembers() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/members`, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch members');
-  return res.json();
-}
+type Member = {
+  credits: string;
+};
 
-async function getTransfers() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/transfers`, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Failed to fetch transfers');
-  return res.json();
-}
+// Mock Data
+const mockHelpRequests: HelpRequest[] = [
+  { status: 'matched', date: '15 พ.ค. 2567' },
+  { status: 'pending', date: '22 มิ.ย. 2567' },
+  { status: 'matched', date: '05 ก.ค. 2567' },
+  { status: 'pending', date: '12 ก.ค. 2567' },
+];
 
+const mockMembers: Member[] = [
+  { credits: '15 ชม.' },
+  { credits: '20 ชม.' },
+  { credits: '5 ชม.' },
+];
 
-export default async function StatisticsPage() {
-  const [helpRequests, members, transfers] = await Promise.all([
-    getHelpRequests(),
-    getMembers(),
-    getTransfers(),
-  ]);
+export default function StatisticsPage() {
+  const helpRequests = mockHelpRequests;
+  const members = mockMembers;
 
   const totalMembers = members.length;
-  const completedMissions = helpRequests.filter((r: any) => r.status === 'matched').length;
-  const pendingRequests = helpRequests.filter((r: any) => r.status === 'pending').length;
-  const totalCredits = members.reduce((acc: number, member: any) => {
+  const completedMissions = helpRequests.filter((r: HelpRequest) => r.status === 'matched').length;
+  const pendingRequests = helpRequests.filter((r: HelpRequest) => r.status === 'pending').length;
+  const totalCredits = members.reduce((acc: number, member: Member) => {
     const credits = parseInt(member.credits.split(' ')[0], 10);
     return acc + (isNaN(credits) ? 0 : credits);
   }, 0);
@@ -49,7 +51,7 @@ export default async function StatisticsPage() {
     matches: 0,
   }));
 
-  helpRequests.forEach((req: any) => {
+  helpRequests.forEach((req: HelpRequest) => {
     const parts = req.date.split(' ');
     if (parts.length === 3) {
       const monthAbbr = parts[1];

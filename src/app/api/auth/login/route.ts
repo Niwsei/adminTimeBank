@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const token = sign({ username }, JWT_SECRET, { expiresIn: '1h' });
 
     const response = NextResponse.json({ success: true });
-    setCookie('auth_token', token, { req: request as any, res: response as any, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    setCookie('auth_token', token, { req: request, res: response, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
 
     return response;
   } else {

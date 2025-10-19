@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -21,16 +21,35 @@ type VerificationEntry = {
   notes?: string
 }
 
-type ApiResponse =
-  | {
-      success: true
-      data: VerificationEntry[]
-      count: number
-    }
-  | {
-      success: false
-      message: string
-    }
+const mockData: VerificationEntry[] = [
+  {
+    id: "USR-001",
+    fullName: "สมชาย ใจดี",
+    email: "somchai.j@example.com",
+    phone: "081-234-5678",
+    submittedAt: new Date().toISOString(),
+    documents: [{ name: "บัตรประชาชน", url: "#" }],
+    status: "pending",
+  },
+  {
+    id: "USR-002",
+    fullName: "สมหญิง รักไทย",
+    email: "somy_rak@example.com",
+    phone: "082-345-6789",
+    submittedAt: new Date(Date.now() - 86400000).toISOString(),
+    documents: [{ name: "บัตรประชาชน", url: "#" }],
+    status: "pending",
+  },
+  {
+    id: "USR-003",
+    fullName: "จอห์น โด",
+    email: "john.doe@example.com",
+    phone: "099-876-5432",
+    submittedAt: new Date(Date.now() - 172800000).toISOString(),
+    documents: [],
+    status: "approved",
+  },
+];
 
 const formatDate = (isoDate: string) => {
   try {
@@ -54,42 +73,24 @@ export function VerificationView() {
   const [search, setSearch] = useState("")
   const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all")
 
-  const loadData = async (showToast = false) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/api/admin/verification`, {
-        cache: "no-store",
-        credentials: "include",
-      })
-      const payload: ApiResponse = await response.json()
-
-      if (!response.ok || !payload.success) {
-        throw new Error("Failed to fetch unverified users")
-      }
-
-      setEntries(payload.data)
-
+  const loadData = useCallback((showToast = false) => {
+    setIsLoading(true)
+    setTimeout(() => {
+      setEntries(mockData)
+      setIsLoading(false)
+      setIsRefreshing(false)
       if (showToast) {
         toast({
           title: "รีเฟรชข้อมูลแล้ว",
-          description: `โหลดข้อมูลคำขอยืนยัน ${payload.count} รายการ`,
+          description: `โหลดข้อมูลคำขอยืนยัน ${mockData.length} รายการ`,
         })
       }
-    } catch (error) {
-      console.error("[verification-view]", error)
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถดึงข้อมูลคำขอยืนยันได้",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-      setIsRefreshing(false)
-    }
-  }
+    }, 1000)
+  }, [toast])
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [loadData])
 
   const filteredEntries = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -114,73 +115,33 @@ export function VerificationView() {
 
   const [isUpdating, setIsUpdating] = useState<string | null>(null)
 
-  const handleApprove = async (entry: VerificationEntry) => {
+  const handleApprove = (entry: VerificationEntry) => {
     setIsUpdating(entry.id)
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/api/admin/verification/${entry.id}/verify`, {
-        method: 'PATCH',
-        credentials: 'include',
-      })
-      const payload = await response.json()
-
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.message || 'Failed to approve user')
-      }
-
+    setTimeout(() => {
+      setEntries((prev) =>
+        prev.map((e) => (e.id === entry.id ? { ...e, status: "approved" } : e)),
+      )
       toast({
         title: "ยืนยันผู้ใช้สำเร็จ",
         description: `${entry.fullName} ถูกยืนยันตัวตนแล้ว`,
       })
-
-      setEntries((prev) =>
-        prev.map((e) => (e.id === entry.id ? { ...e, status: "approved" } : e)),
-      )
-    } catch (error: any) {
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: error.message || "ไม่สามารถอนุมัติผู้ใช้ได้",
-        variant: "destructive",
-      })
-    } finally {
       setIsUpdating(null)
-    }
+    }, 500)
   }
 
-  const handleReject = async (entry: VerificationEntry) => {
+  const handleReject = (entry: VerificationEntry) => {
     setIsUpdating(entry.id)
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/api/admin/verification/${entry.id}/reject`, {
-        method: 'PATCH',
-        credentials: 'include',
-        body: JSON.stringify({ rejectionReason: "Rejected by admin" }),
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      const payload = await response.json()
-
-      if (!response.ok || !payload.success) {
-        throw new Error(payload.message || 'Failed to reject user')
-      }
-
+    setTimeout(() => {
+      setEntries((prev) =>
+        prev.map((e) => (e.id === entry.id ? { ...e, status: "rejected" } : e)),
+      )
       toast({
         title: "ปฏิเสธคำขอ",
         description: `ปฏิเสธคำขอของ ${entry.fullName} เรียบร้อย`,
         variant: "destructive",
       })
-
-      setEntries((prev) =>
-        prev.map((e) => (e.id === entry.id ? { ...e, status: "rejected" } : e)),
-      )
-    } catch (error: any) {
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: error.message || "ไม่สามารถปฏิเสธผู้ใช้ได้",
-        variant: "destructive",
-      })
-    } finally {
       setIsUpdating(null)
-    }
+    }, 500)
   }
 
   const handleRefresh = () => {
@@ -312,12 +273,12 @@ export function VerificationView() {
                       </Badge>
                     </TableCell>
                     <TableCell className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => handleApprove(entry)}>
-                        <ShieldCheck className="mr-2 h-4 w-4" />
+                      <Button variant="outline" size="sm" onClick={() => handleApprove(entry)} disabled={isUpdating === entry.id}>
+                        {isUpdating === entry.id ? <Spinner className="h-4 w-4"/> : <ShieldCheck className="mr-2 h-4 w-4" />}
                         อนุมัติ
                       </Button>
-                      <Button variant="destructive" size="sm" onClick={() => handleReject(entry)}>
-                        <ShieldOff className="mr-2 h-4 w-4" />
+                      <Button variant="destructive" size="sm" onClick={() => handleReject(entry)} disabled={isUpdating === entry.id}>
+                        {isUpdating === entry.id ? <Spinner className="h-4 w-4"/> : <ShieldOff className="mr-2 h-4 w-4" />}
                         ปฏิเสธ
                       </Button>
                     </TableCell>

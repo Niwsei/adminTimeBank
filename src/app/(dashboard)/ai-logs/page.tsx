@@ -1,14 +1,6 @@
-import { AILogsView } from "@/components/ai-logs-view"
+import { AILogsView } from "@/components/ai-logs-view";
+import { ai_logs } from "@/data/ai-logs";
 
-async function getAILogs() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/ai-logs`, { cache: 'no-store' });
-  if (!res.ok) {
-    throw new Error('Failed to fetch data')
-  }
-  return res.json()
-}
-
-export default async function AILogsPage() {
-  const initialLogs = await getAILogs();
-  return <AILogsView initialLogs={initialLogs} />
+export default function AILogsPage() {
+  return <AILogsView initialLogs={ai_logs} />;
 }

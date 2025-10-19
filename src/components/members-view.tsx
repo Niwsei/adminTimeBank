@@ -4,7 +4,7 @@ import { motion, Variants } from "framer-motion"
 import { useToast } from "@/hooks/use-toast"
 import { useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Search, Filter, Eye, MoreVertical, User, MapPin, CreditCard, Wrench } from "lucide-react"
+
 type Member = {
   id: string
   name: string
@@ -49,10 +50,10 @@ const itemVariants: Variants = {
 export function MembersView({ initialMembers }: { initialMembers: Member[] }) {
   const { toast } = useToast()
   const [searchQuery, setSearchQuery] = useState("")
-  const [selectedMember, setSelectedMember] = useState<any | null>(null)
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
 
-  const handleViewDetails = (member: any) => {
+  const handleViewDetails = (member: Member) => {
     setSelectedMember(member)
     setIsDetailsOpen(true)
   }

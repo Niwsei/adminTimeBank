@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from "framer-motion"
+import { motion, Variants } from "framer-motion"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { useState, useMemo } from 'react'
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Search, Calendar, Activity, CheckCircle2, User, Star, ClipboardList } from "lucide-react"
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -23,7 +23,7 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { y: 20, opacity: 0 },
   visible: {
     y: 0,
@@ -36,20 +36,34 @@ const itemVariants = {
   }
 };
 
-export function AILogsView({ initialLogs }: { initialLogs: any[] }) {
-  const [logs, setLogs] = useState(initialLogs)
+type Log = {
+  requester: string;
+  requesterId: string;
+  age: number;
+  requestType: string;
+  requestDetail: string;
+  provider: string;
+  providerId: string;
+  rating: number;
+  date: string;
+  matchScore: string;
+  confidence: string;
+  status: string;
+};
+
+export function AILogsView({ initialLogs }: { initialLogs: Log[] }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
-  const [selectedLog, setSelectedLog] = useState<any | null>(null)
+  const [selectedLog, setSelectedLog] = useState<Log | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
 
-  const handleViewDetails = (log: any) => {
+  const handleViewDetails = (log: Log) => {
     setSelectedLog(log)
     setIsDetailsOpen(true)
   }
 
   const filteredLogs = useMemo(() => {
-    return logs.filter(log => {
+    return initialLogs.filter(log => {
       const searchMatch = searchQuery === "" || 
         log.requester.toLowerCase().includes(searchQuery.toLowerCase()) ||
         log.provider.toLowerCase().includes(searchQuery.toLowerCase())
@@ -58,7 +72,7 @@ export function AILogsView({ initialLogs }: { initialLogs: any[] }) {
 
       return searchMatch && statusMatch
     })
-  }, [logs, searchQuery, statusFilter])
+  }, [initialLogs, searchQuery, statusFilter])
 
   return (
     <div className="space-y-6">
@@ -77,7 +91,7 @@ export function AILogsView({ initialLogs }: { initialLogs: any[] }) {
               <CardTitle className="text-sm font-medium text-muted-foreground">ทั้งหมด</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">{logs.length}</div>
+              <div className="text-3xl font-bold">{initialLogs.length}</div>
               <p className="text-xs text-muted-foreground mt-1 font-mono">matching attempts</p>
             </CardContent>
           </Card>
@@ -87,7 +101,7 @@ export function AILogsView({ initialLogs }: { initialLogs: any[] }) {
               <CardTitle className="text-sm font-medium text-muted-foreground">สำเร็จ</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-600">{logs.filter(l => l.status === 'success').length}</div>
+              <div className="text-3xl font-bold text-green-600">{initialLogs.filter(l => l.status === 'success').length}</div>
               <p className="text-xs text-muted-foreground mt-1 font-mono">successful matches</p>
             </CardContent>
           </Card>
@@ -97,7 +111,7 @@ export function AILogsView({ initialLogs }: { initialLogs: any[] }) {
               <CardTitle className="text-sm font-medium text-muted-foreground">ล้มเหลว</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-600">{logs.filter(l => l.status === 'failed').length}</div>
+              <div className="text-3xl font-bold text-red-600">{initialLogs.filter(l => l.status === 'failed').length}</div>
               <p className="text-xs text-muted-foreground mt-1 font-mono">failed matches</p>
             </CardContent>
           </Card>
@@ -107,7 +121,7 @@ export function AILogsView({ initialLogs }: { initialLogs: any[] }) {
               <CardTitle className="text-sm font-medium text-muted-foreground">คะแนนเฉลี่ย</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{`${(logs.reduce((acc, l) => acc + parseFloat(l.matchScore), 0) / logs.length).toFixed(1)}%`}</div>
+              <div className="text-3xl font-bold text-blue-600">{`${(initialLogs.reduce((acc, l) => acc + parseFloat(l.matchScore), 0) / initialLogs.length).toFixed(1)}%`}</div>
               <p className="text-xs text-muted-foreground mt-1 font-mono">avg matching score</p>
             </CardContent>
           </Card>

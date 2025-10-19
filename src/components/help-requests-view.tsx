@@ -3,8 +3,6 @@
 import { motion, type Variants } from "framer-motion"
 import { useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table"
@@ -16,30 +14,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { help_requests } from "@/data/help-requests"
 import {
-  Activity,
-  AlertTriangle,
-  Calendar,
   CheckCircle2,
-  Clock,
   Eye,
-  Filter,
-  LinkIcon,
-  MapPin,
-  Search,
-  TrendingUp,
   Users,
 } from "lucide-react"
 
@@ -65,14 +44,18 @@ interface HelpRequest {
   borderColor: string
 }
 
-const categoryOptions = [
-  { value: "all", label: "ทุกประเภท" },
-  { value: "พาไปโรงพยาบาล", label: "พาไปโรงพยาบาล" },
-  { value: "ทำความสะอาด", label: "ทำความสะอาด" },
-  { value: "ซ่อมบำรุง", label: "ซ่อมบำรุง" },
-  { value: "ดูแลผู้สูงอายุ", label: "ดูแลผู้สูงอายุ" },
-  { value: "ทำสวน", label: "ทำสวน" },
-]
+interface Provider {
+  id: string;
+  name: string;
+  skills: string;
+  credits: string;
+}
+
+const mockProviders: Provider[] = [
+  { id: "PROV-001", name: "อาสา ใจดี", skills: "ดูแลผู้สูงอายุ, ทำอาหาร", credits: "150 ชม." },
+  { id: "PROV-002", name: "อาสา บำเพ็ญประโยชน์", skills: "ทำสวน, ซ่อมแซมเล็กน้อย", credits: "250 ชม." },
+  { id: "PROV-003", name: "อาสา พัฒนา", skills: "สอนหนังสือ, ขับรถ", credits: "80 ชม." },
+];
 
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
@@ -98,23 +81,14 @@ const itemVariants: Variants = {
   }
 };
 
-const statusOptions = [
-  { value: "all", label: "ทุกสถานะ" },
-  { value: "urgent", label: "เร่งด่วน" },
-  { value: "pending", label: "รอดำเนินการ" },
-  { value: "matched", label: "จับคู่แล้ว" },
-]
-
 export function HelpRequestsView() {
   const { toast } = useToast()
-  const [searchQuery, setSearchQuery] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("all")
-  const [statusFilter, setStatusFilter] = useState("all")
+  const [searchQuery] = useState("")
+  const [categoryFilter] = useState("all")
+  const [statusFilter] = useState("all")
   const [selectedRequest, setSelectedRequest] = useState<HelpRequest | null>(null)
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
-  const [isMatchOpen, setIsMatchOpen] = useState(false)
-  const [isCancelOpen, setIsCancelOpen] = useState(false)
-  const [providers, setProviders] = useState<any[]>([])
+  const [providers, setProviders] = useState<Provider[]>([])
   const [isFetchingProviders, setIsFetchingProviders] = useState(false)
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null)
 
@@ -137,41 +111,21 @@ export function HelpRequestsView() {
     })
   }, [searchQuery, categoryFilter, statusFilter])
 
-  const stats = useMemo(
-    () => ({
-      total: filteredRequests.length,
-      urgent: filteredRequests.filter((r) => r.status === "urgent").length,
-      pending: filteredRequests.filter((r) => r.status === "pending").length,
-      matched: filteredRequests.filter((r) => r.status === "matched").length,
-    }),
-    [filteredRequests],
-  )
-
   const openDetails = (request: HelpRequest) => {
     setSelectedRequest(request)
     setIsDetailsOpen(true)
     // Reset and fetch providers
     setSelectedProviderId(null)
     setProviders([])
-    fetchProviders()
+    loadProviders()
   }
 
-  const fetchProviders = async () => {
-    try {
-      setIsFetchingProviders(true);
-      const response = await fetch("/api/members");
-      const data = await response.json();
-      setProviders(data);
-    } catch (error) {
-      console.error("Failed to fetch providers:", error);
-      toast({
-        title: "เกิดข้อผิดพลาด",
-        description: "ไม่สามารถโหลดข้อมูลผู้ให้บริการได้",
-        variant: "destructive",
-      });
-    } finally {
+  const loadProviders = () => {
+    setIsFetchingProviders(true);
+    setTimeout(() => {
+      setProviders(mockProviders);
       setIsFetchingProviders(false);
-    }
+    }, 1000);
   };
 
   const handleProceedToMatch = () => {
@@ -183,38 +137,24 @@ export function HelpRequestsView() {
       });
       return;
     }
-    setIsDetailsOpen(false);
-    setIsMatchOpen(true);
-  };
-
-  const handleMatchConfirm = async () => {
-    if (!selectedRequest || !selectedProviderId) return;
-    const provider = providers.find(p => p.id === selectedProviderId);
     // Mock API call
-    console.log("Matching request", selectedRequest.id, "with provider", provider?.id)
+    const provider = mockProviders.find(p => p.id === selectedProviderId);
     toast({
       title: "จับคู่สำเร็จ",
-      description: `คำขอของ ${selectedRequest.requester.name} ถูกจับคู่กับ ${provider?.name} แล้ว`,
+      description: `คำขอของ ${selectedRequest?.requester.name} ถูกจับคู่กับ ${provider?.name} แล้ว`,
       variant: "default",
     });
-    setIsMatchOpen(false);
+    setIsDetailsOpen(false);
   };
 
   const handleCancelClick = () => {
-    setIsDetailsOpen(false);
-    setIsCancelOpen(true);
-  }
-
-  const handleCancelConfirm = async () => {
-    if (!selectedRequest) return;
     // Mock API call
-    console.log("Canceling request", selectedRequest.id)
     toast({
       title: "ยกเลิกคำขอสำเร็จ",
-      description: `คำขอของ ${selectedRequest.requester.name} ถูกยกเลิกแล้ว`,
+      description: `คำขอของ ${selectedRequest?.requester.name} ถูกยกเลิกแล้ว`,
     });
-    setIsCancelOpen(false);
-  };
+    setIsDetailsOpen(false);
+  }
 
   return (
     <>
@@ -402,14 +342,6 @@ export function HelpRequestsView() {
           </motion.div>
         </DialogContent>
       </Dialog>
-
-      <AlertDialog open={isMatchOpen} onOpenChange={setIsMatchOpen}>
-        {/* ... Match confirmation dialog ... */}
-      </AlertDialog>
-
-      <AlertDialog open={isCancelOpen} onOpenChange={setIsCancelOpen}>
-        {/* ... Cancel confirmation dialog ... */}
-      </AlertDialog>
     </>
   )
 }
