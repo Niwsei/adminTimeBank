@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { motion } from "framer-motion"
+import { motion, type Variants } from "framer-motion"
 import { useMemo, useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -74,7 +74,7 @@ const categoryOptions = [
   { value: "ทำสวน", label: "ทำสวน" },
 ]
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -85,7 +85,7 @@ const containerVariants = {
   }
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { y: 20, opacity: 0 },
   visible: {
     y: 0,
@@ -195,7 +195,7 @@ export function HelpRequestsView() {
     toast({
       title: "จับคู่สำเร็จ",
       description: `คำขอของ ${selectedRequest.requester.name} ถูกจับคู่กับ ${provider?.name} แล้ว`,
-      variant: "success",
+      variant: "default",
     });
     setIsMatchOpen(false);
   };
@@ -343,7 +343,18 @@ export function HelpRequestsView() {
                   <div className="rounded-lg border p-4">
                     <h3 className="text-lg font-semibold mb-4">ข้อมูลผู้ให้บริการที่เสนอ</h3>
                     {isFetchingProviders ? (
-                      <div className="flex h-full items-center justify-center"><Spinner /></div>
+                      <div className="flex h-full items-center justify-center">
+                        <svg
+                          className="h-6 w-6 animate-spin text-muted-foreground"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                      </div>
                     ) : (
                       <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
                         {providers.map((provider) => (

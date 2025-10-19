@@ -10,7 +10,7 @@ export default function WithdrawalsPage() {
         <h1 className="text-3xl font-bold">การถอนเครดิต</h1>
         <p className="text-muted-foreground">จัดการคำขอถอนเครดิตของสมาชิก</p>
       </div>
-      <WithdrawalsView initialWithdrawals={withdrawals} />
+      <WithdrawalsView initialWithdrawals={withdrawals as unknown as any} />
     </div>
   )
 }

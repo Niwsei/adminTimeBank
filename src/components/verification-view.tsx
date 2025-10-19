@@ -112,19 +112,75 @@ export function VerificationView() {
     [entries],
   )
 
-  const handleApprove = (entry: VerificationEntry) => {
-    toast({
-      title: "ยืนยันผู้ใช้สำเร็จ",
-      description: `${entry.fullName} ถูกยืนยันตัวตนแล้ว`,
-    })
+  const [isUpdating, setIsUpdating] = useState<string | null>(null)
+
+  const handleApprove = async (entry: VerificationEntry) => {
+    setIsUpdating(entry.id)
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/api/admin/verification/${entry.id}/verify`, {
+        method: 'PATCH',
+        credentials: 'include',
+      })
+      const payload = await response.json()
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message || 'Failed to approve user')
+      }
+
+      toast({
+        title: "ยืนยันผู้ใช้สำเร็จ",
+        description: `${entry.fullName} ถูกยืนยันตัวตนแล้ว`,
+      })
+
+      setEntries((prev) =>
+        prev.map((e) => (e.id === entry.id ? { ...e, status: "approved" } : e)),
+      )
+    } catch (error: any) {
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: error.message || "ไม่สามารถอนุมัติผู้ใช้ได้",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUpdating(null)
+    }
   }
 
-  const handleReject = (entry: VerificationEntry) => {
-    toast({
-      title: "ปฏิเสธคำขอ",
-      description: `ปฏิเสธคำขอของ ${entry.fullName} เรียบร้อย`,
-      variant: "destructive",
-    })
+  const handleReject = async (entry: VerificationEntry) => {
+    setIsUpdating(entry.id)
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_ADMIN_API_URL}/api/admin/verification/${entry.id}/reject`, {
+        method: 'PATCH',
+        credentials: 'include',
+        body: JSON.stringify({ rejectionReason: "Rejected by admin" }),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      const payload = await response.json()
+
+      if (!response.ok || !payload.success) {
+        throw new Error(payload.message || 'Failed to reject user')
+      }
+
+      toast({
+        title: "ปฏิเสธคำขอ",
+        description: `ปฏิเสธคำขอของ ${entry.fullName} เรียบร้อย`,
+        variant: "destructive",
+      })
+
+      setEntries((prev) =>
+        prev.map((e) => (e.id === entry.id ? { ...e, status: "rejected" } : e)),
+      )
+    } catch (error: any) {
+      toast({
+        title: "เกิดข้อผิดพลาด",
+        description: error.message || "ไม่สามารถปฏิเสธผู้ใช้ได้",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUpdating(null)
+    }
   }
 
   const handleRefresh = () => {
@@ -205,7 +261,7 @@ export function VerificationView() {
         <CardContent>
           {isLoading ? (
             <div className="flex h-40 items-center justify-center">
-              <Spinner size="large" />
+              <Spinner className="h-10 w-10" />
             </div>
           ) : (
             <Table>
