@@ -18,12 +18,6 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-
-    // In a real app, you'd call an API route
-    if (username === 'admin' && password === 'admin') {
-      // Mock successful login by setting a cookie
-      // The actual cookie setting will be done via an API route
-      // to avoid exposing it on the client side.
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -37,10 +31,6 @@ export default function LoginPage() {
         setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
         toast({ title: "เกิดข้อผิดพลาด", description: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', variant: 'destructive' });
       }
-    } else {
-      setError('ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
-      toast({ title: "เกิดข้อผิดพลาด", description: 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง', variant: 'destructive' });
-    }
   }
 
   return (
